@@ -204,7 +204,7 @@ const App = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'} p-4 rounded-3xl shadow-sm border">
               <span className="text-[10px] uppercase tracking-widest text-slate-400 block mb-3">Sua Foto</span>
-              <div className="aspect-[3/4] bg-white dark:bg-slate-950 rounded-2xl overflow-hidden relative border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center">
+              <div className="aspect-[3/4] bg-slate-50 dark:bg-slate-950 rounded-2xl overflow-hidden relative border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center">
                 ${personImage.preview 
                   ? html`
                     <img src=${personImage.preview} className="w-full h-full object-cover" />
@@ -223,7 +223,7 @@ const App = () => {
             </div>
             <div className="${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'} p-4 rounded-3xl shadow-sm border">
               <span className="text-[10px] uppercase tracking-widest text-slate-400 block mb-3">Sua Roupa</span>
-              <div className="aspect-[3/4] bg-white dark:bg-slate-950 rounded-2xl overflow-hidden relative border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center">
+              <div className="aspect-[3/4] bg-slate-50 dark:bg-slate-950 rounded-2xl overflow-hidden relative border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center">
                 ${clothingImage.preview 
                   ? html`
                     <img src=${clothingImage.preview} className="w-full h-full object-cover" />
