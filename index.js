@@ -59,10 +59,7 @@ const resizeImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
 // --- SERVIÇO GEMINI ---
 async function generateTryOnImages(personBase64, clothingBase64, accessories = []) {
   // Inicialização direta com a chave concatenada, sem uso de 'process'
-const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash",
-    apiVersion: "v1"
-});
+const ai = new GoogleGenAI({ apiKey: API_KEY });
   
   const personData = personBase64.split(',')[1];
   const clothingData = clothingBase64.split(',')[1];
