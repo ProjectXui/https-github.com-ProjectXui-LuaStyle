@@ -1,0 +1,7 @@
+{
+  "name": "LuaStyle",
+  "description": "Uma ferramenta de provador virtual de roupas que utiliza Inteligência Artificial para sobrepor peças de vestuário em fotos de usuários.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
