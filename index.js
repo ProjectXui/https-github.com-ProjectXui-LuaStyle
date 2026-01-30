@@ -10,14 +10,6 @@ import { GoogleGenAI } from "@google/genai";
 
 const html = htm.bind(React.createElement);
 
-// --- SEGURANÇA E OFUSCAÇÃO DA CHAVE ---
-const k1 = 'AIzaSyC';
-const k2 = 's91m7IZT';
-const k3 = 'rXHpLL3';
-const k4 = 'wPgH32';
-const k5 = 'BA6rcU1VEHE';
-const API_KEY = k1 + k2 + k3 + k4 + k5;
-
 // --- CONSTANTES ---
 const PREDEFINED_ACCESSORIES = [
   "Anéis", "Bolsas", "Brincos", "Correntes de pescoço", 
@@ -58,8 +50,8 @@ const resizeImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
 
 // --- SERVIÇO GEMINI ---
 async function generateTryOnImages(personBase64, clothingBase64, accessories = []) {
-  // Inicialização segura conforme diretrizes
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  // Inicialização obrigatória utilizando a variável de ambiente segura injetada
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const personData = personBase64.split(',')[1];
   const clothingData = clothingBase64.split(',')[1];
@@ -68,43 +60,27 @@ async function generateTryOnImages(personBase64, clothingBase64, accessories = [
     ? ` Adicionalmente, equipe a pessoa com estes acessórios específicos: ${accessories.join(', ')}.`
     : "";
 
-  const variations = [
-    { style: "fotografia de estúdio de alta fidelidade", setting: "fundo neutro de catálogo" },
-    { style: "fotografia urbana realista", setting: "ambiente externo com iluminação natural" }
-  ];
+  const promptText = `
+    MANDATO SUPREMO DE IDENTIDADE:
+    1. IDENTIDADE MESTRE (IMAGEM 1): Mantenha 100% da face (olhos, nariz, boca), cabelo e biotipo da pessoa. 
+    2. FONTE DE TEXTURA (IMAGEM 2): Extraia apenas a ROUPA. Ignore o rosto e gênero da pessoa na imagem 2.
+    3. COMPOSIÇÃO: Transfira a roupa para a pessoa da imagem 1 com caimento perfeito.${accessoryContext}
+  `;
 
-  const generatePromises = variations.map(async (config) => {
-    const promptText = `
-      MANDATO SUPREMO DE IDENTIDADE:
-      1. IDENTIDADE MESTRE (IMAGEM 1): Mantenha 100% da face (olhos, nariz, boca), cabelo e biotipo da pessoa. 
-      2. FONTE DE TEXTURA (IMAGEM 2): Extraia apenas a ROUPA. Ignore o rosto e gênero da pessoa na imagem 2.
-      3. COMPOSIÇÃO: Transfira a roupa para a pessoa da imagem 1 com caimento perfeito.
-      Estilo: ${config.style}. Cenário: ${config.setting}.${accessoryContext}
-    `;
+  try {
+    // Uso do modelo gemini-2.5-flash-image conforme diretrizes para tarefas de edição de imagem
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          { inlineData: { data: personData, mimeType: 'image/jpeg' } },
+          { inlineData: { data: clothingData, mimeType: 'image/jpeg' } },
+          { text: promptText },
+        ],
+      },
+    });
 
-    try {
-      // Uso do modelo correto para edição/geração de imagens (2.5 Flash Image)
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [
-            { inlineData: { data: personData, mimeType: 'image/jpeg' } },
-            { inlineData: { data: clothingData, mimeType: 'image/jpeg' } },
-            { text: promptText },
-          ],
-        },
-      });
-      return response;
-    } catch (error) {
-      console.error("Erro na geração individual:", error);
-      return null;
-    }
-  });
-
-  const responses = await Promise.all(generatePromises);
-  const results = [];
-
-  for (const response of responses) {
+    const results = [];
     if (response?.candidates?.[0]?.content?.parts) {
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData) {
@@ -112,10 +88,13 @@ async function generateTryOnImages(personBase64, clothingBase64, accessories = [
         }
       }
     }
+    
+    if (results.length === 0) throw new Error("A IA não conseguiu processar as imagens.");
+    return results.slice(0, 2);
+  } catch (error) {
+    console.error("Erro na geração:", error);
+    throw error;
   }
-
-  if (results.length === 0) throw new Error("A IA não conseguiu processar as imagens. Tente fotos mais claras.");
-  return results.slice(0, 2);
 }
 
 // --- COMPONENTES ---
@@ -192,7 +171,7 @@ const App = () => {
 
   return html`
     <div className="min-h-screen ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} flex flex-col transition-colors duration-300 overflow-hidden font-sans">
-      <header className="${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} border-b shrink-0 h-16 z-50">
+      <header className="${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} border-b shrink-0 h-16 z-50 transition-colors">
         <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <${Logo} className="w-10 h-10" />
@@ -214,7 +193,7 @@ const App = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'} p-4 rounded-3xl shadow-sm border">
               <span className="text-[10px] uppercase tracking-widest text-slate-400 block mb-3">Sua Foto</span>
-              <div className="aspect-[3/4] bg-slate-50 dark:bg-slate-950 rounded-2xl overflow-hidden relative border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center">
+              <div className="aspect-[3/4] bg-slate-50 dark:bg-slate-950 rounded-2xl overflow-hidden relative border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center transition-colors">
                 ${personImage.preview 
                   ? html`
                     <img src=${personImage.preview} className="w-full h-full object-cover" />
@@ -233,7 +212,7 @@ const App = () => {
             </div>
             <div className="${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'} p-4 rounded-3xl shadow-sm border">
               <span className="text-[10px] uppercase tracking-widest text-slate-400 block mb-3">Sua Roupa</span>
-              <div className="aspect-[3/4] bg-slate-50 dark:bg-slate-950 rounded-2xl overflow-hidden relative border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center">
+              <div className="aspect-[3/4] bg-slate-50 dark:bg-slate-950 rounded-2xl overflow-hidden relative border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center transition-colors">
                 ${clothingImage.preview 
                   ? html`
                     <img src=${clothingImage.preview} className="w-full h-full object-cover" />
@@ -286,7 +265,7 @@ const App = () => {
                       ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
                       : (isDark ? 'bg-slate-800 border-transparent text-slate-400 hover:bg-slate-700' : 'bg-slate-50 border-slate-50 text-slate-500 hover:border-indigo-100')}"
                 >
-                  ${acc}
+                  <span className="truncate">${acc}</span>
                   ${selectedSuggestions.includes(acc) && html`<${Check} size=${12} />`}
                 </button>
               `)}
@@ -294,7 +273,7 @@ const App = () => {
           </div>
         </div>
 
-        <div className="hidden lg:flex flex-1 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'} rounded-t-[3rem] shadow-2xl border flex-col items-center justify-center p-12 relative overflow-hidden">
+        <div className="hidden lg:flex flex-1 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'} rounded-t-[3rem] shadow-2xl border flex-col items-center justify-center p-12 relative overflow-hidden transition-colors">
           ${results.length > 0 && !isLoading 
             ? html`
               <div className="text-center">
