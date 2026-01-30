@@ -6,7 +6,7 @@ import {
   Shirt, Sparkles, RefreshCcw, Download, Share2, Upload, 
   Trash2, Lightbulb, Check, AlertCircle, Moon, Sun, X, Eye 
 } from 'lucide-react';
-import { GoogleGenerativeAI } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
 const html = htm.bind(React.createElement);
 
@@ -59,7 +59,7 @@ const resizeImage = (base64Str, maxWidth = 1024, maxHeight = 1024) => {
 // --- SERVIÇO GEMINI ---
 async function generateTryOnImages(personBase64, clothingBase64, accessories = []) {
   // Inicialização direta com a chave concatenada, sem uso de 'process'
-const genAI = new GoogleGenerativeAI(API_KEY);
+const genAI = new GoogleGenAI(API_KEY);
 const ai = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: 'v1' });
   
   const personData = personBase64.split(',')[1];
